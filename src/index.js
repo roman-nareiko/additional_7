@@ -1,90 +1,94 @@
 module.exports = function solveSudoku(matrix) {
-  const gap = 0;
-  let solved = false;
+  function solve_Sudoku(grid, row, col) {
+    var cell = findUnassignedLocation(grid, row, col);
+    row = cell[0];
+    col = cell[1];
 
-  function get_gap(matrix) {
-    for(let i = 0; i < 9; i++){ 
-      for(let j = 0; j < 9; j++) {
-        if(matrix[i][j] === gap)
-          return [i, j];
-      }
-    }
-  }
-
-  function get_triplet_indices(r, c) {
-    let first_row = Math.floor(r/3);
-    let first_col = Math.floor(c/3)*3;
-    let indices = [];
-
-    for(let i = first_row; i < first_row + 3; i++) {
-      indices.push([i, first_col]);
-      indices.push([i, first_col + 1]);
-      indices.push([i, first_col + 2]);
+    // base case: if no empty cell  
+    if (row == -1) {
+        console.log("solved");
+        return true;
     }
 
-    return indices;
-  }
+    for (var num = 1; num <= 9; num++) {
 
-  function is_fit(value, indices) {
-    return is_fit_in_row(value, indices) && 
-           is_fit_in_column(value, indices) && 
-           is_fit_in_triplet(value, indices);
-  }
+        if ( noConflicts(grid, row, col, num) ) {   
+            grid[row][col] = num;
 
-  function is_fit_in_row(value, indices) {
-    const row = matrix[indices[0]];
+            if ( solve_Sudoku(grid, row, col) ) {                
+                return true;
+            }
 
-    return row.every(x => x !== value);
-  }
-
-  function is_fit_in_column(value, indices) {
-    const column = [];
-
-    matrix.forEach(row => {
-      column.push(row[indices[1]]);
-    });
-
-    return column.every(x => x !== value);
-  }
-
-  function is_fit_in_triplet(value, indices) {
-    const triplet_indices = get_triplet_indices(indices[0], indices[1]);
-    const triplet = [];
-
-    triplet_indices.forEach(row => {
-      let r = row[0];
-      let c = row[1];
-
-      triplet.push(matrix[r][c]);
-    });
-
-    return triplet.every(x => x !== value);
-  }
-
-  function solve_sudoku(matrix) {
-    let gap_indices = get_gap(matrix);
-
-    if(!gap_indices) 
-      return true;
-
-    let row = gap_indices[0];
-    let col = gap_indices[1];
-
-    for(let candidate = 1; candidate < 10; candidate++) {
-      if(is_fit(candidate, gap_indices)) {
-        matrix[row][col] = candidate;
-        
-        if(solve_sudoku(matrix))
-          return true;
- 
-        matrix[row][col] = gap;
-      }
+                    // mark cell as empty (with 0)    
+            grid[row][col] = 0;
+        }
     }
 
+    // trigger back tracking
     return false;
-  }
+}
 
-  solve_sudoku(matrix);
+
+function findUnassignedLocation(grid, row, col) {
+    var done = false;
+    var res = [-1, -1];
+
+    while (!done) {
+        if (row == 9) {
+            done = true;
+        }
+        else {
+            if (grid[row][col] == 0) {
+                res[0] = row;
+                res[1] = col;
+                done = true;
+            }
+            else {
+                if (col < 8) {
+                    col++;
+                }
+                else {
+                    row++;
+                    col = 0;
+                }
+            }
+        }
+    }
+
+    return res;
+}
+
+function noConflicts(grid, row, col, num) {
+    return isRowOk(grid, row, num) && isColOk(grid, col, num) && isBoxOk(grid, row, col, num);
+}
+
+function isRowOk(grid, row, num) {
+    for (var col = 0; col < 9; col++)
+        if (grid[row][col] == num)
+            return false;
+
+    return true;
+}
+function isColOk(grid, col, num) {
+    for (var row = 0; row < 9; row++)
+    if (grid[row][col] == num)
+        return false;
+
+    return true;    
+}
+function isBoxOk(grid, row, col, num) {
+    row = Math.floor(row / 3) * 3;
+    col = Math.floor(col / 3) * 3;
+
+    for (var r = 0; r < 3; r++)
+        for (var c = 0; c < 3; c++)
+            if (grid[row + r][col + c] == num)
+                return false;
+
+    return true;
+}
+
+solve_Sudoku(matrix, 0, 0);
   console.log(matrix);
 
   return matrix;
